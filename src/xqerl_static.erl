@@ -3591,7 +3591,8 @@ handle_node(State, {treat_as, Expr1, #xqSeqType{} = Expr2}) ->
                    {instance_of, St1, St2}, St1, {error, 'XPDY0050'}},   
    set_statement_and_type(State, NewStatement, St2);
 %% 3.19 Simple map operator (!)
-handle_node(State, {'simple-map', _Id, SeqExpr, MapExpr}) -> 
+handle_node(State0, #xqSimpleMap{lhs = SeqExpr, rhs = MapExpr, anno = Line} = Sm) ->
+   State = set_line_num(State0, Line),
    SeqState     = handle_node(State, SeqExpr),
    SeqStatement = get_statement(SeqState),
    SeqType      = get_statement_type(SeqState),
@@ -3601,7 +3602,7 @@ handle_node(State, {'simple-map', _Id, SeqExpr, MapExpr}) ->
    MapStatement = get_statement(MapState),
    MapType      = get_statement_type(MapState),
    set_statement_and_type(State, 
-                          {'simple-map', SeqStatement, MapStatement}, 
+                          Sm#xqSimpleMap{lhs = SeqStatement, rhs = MapStatement}, 
                           maybe_many_type(MapType));
 %% 3.20 Arrow operator (=>) 
 % done in parser

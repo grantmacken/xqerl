@@ -869,7 +869,7 @@ end.
    B = list_to_binary(["~", integer_to_list(Id)]),
    Nm = #qname{namespace = 'no-namespace', prefix = <<>>, local_name = B},
    {update, modify, next_id(), [#xqVar{id = Id, name = Nm, 'expr' = '$1', anno = line('$2')}], 
-      {'simple-map', next_id(), #xqVarRef{name = Nm}, '$5'}, 
+      #xqSimpleMap{id = next_id(), lhs = #xqVarRef{name = Nm}, rhs = '$5', anno = line('$2')}, 
       #xqVarRef{name = Nm}}.
 'TransformWithExpr' -> 'UnaryExpr' : '$1'.
 
@@ -930,10 +930,10 @@ end.
 % [107]    SimpleMapExpr     ::=      PathExpr ("!" PathExpr)*
 'SimpleMapExpr'          -> 'PathExpr' '!' 'SimpleMapExpr' : 
 case '$3' of
-   {'simple-map', I, P, S} ->
-      {'simple-map', I, {'simple-map', next_id(), '$1', P}, S};
-   _ ->
-      {'simple-map', next_id(), '$1', '$3'}
+    #xqSimpleMap{id = I, lhs = P, rhs = S, anno = A} ->
+        #xqSimpleMap{id = I, lhs = #xqSimpleMap{id = next_id(), lhs = '$1', rhs = P, anno = line('$2')}, rhs = S, anno = A};
+    _ ->
+        #xqSimpleMap{id = next_id(), lhs = '$1', rhs = '$3', anno = line('$2')}
 end.
 'SimpleMapExpr'          -> 'PathExpr' : '$1'.
 

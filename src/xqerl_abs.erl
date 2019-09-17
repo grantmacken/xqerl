@@ -1374,7 +1374,8 @@ expr_do(_Ctx, {error, ErrCode}) when is_atom(ErrCode) ->
    ?P("erlang:exit(xqerl_error:error(_@ErrCode@))");
 
 % bang operator
-expr_do(Ctx, {'simple-map',SeqExpr,MapExpr}) ->
+expr_do(Ctx, #xqSimpleMap{lhs = SeqExpr, rhs = MapExpr, anno = Line}) ->
+   _ = set_line(Line),
    CtxVar = {var,?L,get_context_variable_name(Ctx)},
    SeqAbs = expr_do(Ctx, SeqExpr),
 

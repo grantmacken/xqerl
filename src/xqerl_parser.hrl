@@ -190,4 +190,11 @@
    anno :: undefined | integer()
 }).
 
+-record(xqSimpleMap, {
+   id   :: integer(),
+   lhs  :: term() | [term()],
+   rhs  :: term() | [term()],
+   anno :: undefined | integer()
+}).
+
 
