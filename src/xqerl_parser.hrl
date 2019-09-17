@@ -149,6 +149,18 @@
    anno    :: undefined | integer()
 }).
 
+-record(xqFunctionDef, {
+   id          = -1 :: integer(),
+   annotations = [] :: [ #annotation{} ],
+   name        = undefined :: #qname{} | undefined,
+   arity       = 0 :: integer(),
+   params      = [] :: [#xqSeqType{}] | [term()] | {any(), any()},
+   type        = undefined :: undefined | any | #xqSeqType{},
+   body        = undefined :: undefined | tuple(),
+   external    = false :: boolean(),
+   anno        = undefined :: undefined | integer()
+}).
+
 -type(valueComp() :: 'eq' | 'ne' | 'lt' | 'le' | 'gt' | 'gt').
 -type(generalComp() :: '=' | '!=' | '<' | '<=' | '>' | '>=').
 -type(nodeComp() :: 'is' | '<<' | '>>').

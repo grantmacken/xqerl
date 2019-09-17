@@ -97,7 +97,7 @@ get_module_prolog(Ns, All) ->
    lists:flatten(P).
 
 clear_id([#xqFunction{} = H|T]) ->
-   [H#xqFunction{id = 0}|clear_id(T)];
+   [H|clear_id(T)];
 clear_id([#xqVar{} = H|T]) ->
    [H#xqVar{id = 0}|clear_id(T)];
 clear_id([]) -> [].

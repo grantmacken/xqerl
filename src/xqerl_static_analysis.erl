@@ -46,7 +46,7 @@ analyze(Body, Functions, Variables) ->
    % add the functions
    M2 = add_glob_funs(G, Functions, M1),
    % strip non-functions
-   Functions1 = [F || #xqFunction{} = F  <- Functions],
+   Functions1 = [F || #xqFunctionDef{} = F  <- Functions],
    % strip non-variables
    Variables1 = [V || #xqVar{} = V  <- Variables] ++ 
                   [C || {'context-item', _} = C <- Variables],
@@ -361,11 +361,11 @@ x(G, Map, Parent, [#xqTypeswitchCase{variable = #xqVar{id = Id, name = Nm0, expr
    Map;
 
 % local function defs
-x(G, Map, [#xqFunction{id = Id, 
-                       name = Nm0, 
-                       arity = Ar, 
-                       body = Body, 
-                       params = Params}|T], _Data) ->
+x(G, Map, [#xqFunctionDef{id = Id, 
+                          name = Nm0, 
+                          arity = Ar, 
+                          body = Body, 
+                          params = Params}|T], _Data) ->
    Nm = sim_name(Nm0),
    FnKey = {Id,Nm,Ar},
    add_vertex(G, FnKey),
@@ -707,9 +707,9 @@ add_glob_variables(G, Variables) ->
 % returns map
 add_glob_funs(G, Functions, Map0) ->
    %?dbg("Functions",Functions),
-   Fun = fun(#xqFunction{name = #qname{namespace = undefined}}, _) ->
+   Fun = fun(#xqFunctionDef{name = #qname{namespace = undefined}}, _) ->
                ?err('XQST0060');
-            (#xqFunction{id = Id, name = Nm, arity = Ar, params = Params}, Map) ->
+            (#xqFunctionDef{id = Id, name = Nm, arity = Ar, params = Params}, Map) ->
                S = sim_name(Nm),
                FnKey = {Id,S, Ar},
                add_vertex(G, {Id,S, Ar}),
@@ -738,6 +738,7 @@ add_glob_funs(G, Functions, Map0) ->
                         #{TempKey := 0} ->
                            Map;
                         #{TempKey := _} ->
+                           ?dbg("XQST0034", TempKey),
                            ?err('XQST0034');
                         _ ->
                            maps:put(TempKey, 0, Map)

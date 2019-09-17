@@ -183,7 +183,7 @@ Nonassoc 2200 ':' ' :' ': '.
 'LibraryModule'          -> 'ModuleDecl'          : {'$1', [], undefined}.
 
 'ModuleDecl'             -> 'module' 'namespace' 'NCName' '=' 'URILiteral' 'Separator' 
-                           : if '$5' == <<>> -> ?err('XQST0088');
+                           : if '$5' == <<>> -> ?err('XQST0088', {undefined, line('$4')});
                                 true ->
                                  check_prefix_namespace(bin_value_of('$3'), '$5'),
                                  Ns = list_to_binary(["Q{", '$5',"}"]),
@@ -193,7 +193,8 @@ Nonassoc 2200 ':' ' :' ': '.
 
 'Separator'              -> ';'.
 
-'Prolog'                 -> 'Prolog1s' : [P || P <- lists:flatten('$1'), not is_atom(P)]. % strip the table inserts
+'Prolog'                 -> 'Prolog1s' : lists:flatten('$1'). % strip the table inserts
+%'Prolog'                 -> 'Prolog1s' : [P || P <- lists:flatten('$1'), not is_atom(P)]. % strip the table inserts
 
 % prolog part I
 'Prolog1'                -> 'DefaultNamespaceDecl' 'Separator' : ['$1'].
@@ -208,7 +209,7 @@ Nonassoc 2200 ':' ' :' ': '.
 %'Prolog1'                -> 'VarDecl' : ['$1'].
 %'Prolog1'                -> 'FunctionDecl' : ['$1'].
 
-'Prolog1s'               -> 'Prolog1' 'Prolog1s' : ['$1' | '$2'].
+'Prolog1s'               -> 'Prolog1' 'Prolog1s' : ['$1' , '$2'].
 'Prolog1s'               -> 'Prolog1' : ['$1'].
 
 'Setter'                 -> 'BoundarySpaceDecl'    : {set, '$1'}.
@@ -248,8 +249,8 @@ Nonassoc 2200 ':' ' :' ': '.
 'DecimalFormatDecl'      -> 'declare' 'decimal-format' 'EQName'  'DFPropertyNameList' : {'decimal-format', qname(other,'$3'), '$4'}.
 'DecimalFormatDecl'      -> 'declare' 'default' 'decimal-format' 'DFPropertyNameList' : {'decimal-format', <<>>, '$4'}.
 
-'RevalidationDecl'       -> 'declare' 'revalidation' 'strict' : ?err('XUST0026'). %{'revalidation', 'strict'}.
-'RevalidationDecl'       -> 'declare' 'revalidation' 'lax' : ?err('XUST0026'). %{'revalidation', 'lax'}.
+'RevalidationDecl'       -> 'declare' 'revalidation' 'strict' : ?err('XUST0026', {undefined, line('$3')}). %{'revalidation', 'strict'}.
+'RevalidationDecl'       -> 'declare' 'revalidation' 'lax' : ?err('XUST0026', {undefined, line('$3')}). %{'revalidation', 'lax'}.
 'RevalidationDecl'       -> 'declare' 'revalidation' 'skip' : {'revalidation', 'skip'}.
 
 'DFPropertyNameList'     -> 'DFPropertyName' '=' 'StringLiteral'  : [{'$1', bin_value_of('$3')}].
@@ -267,7 +268,7 @@ Nonassoc 2200 ':' ' :' ': '.
 'DFPropertyName'         -> 'pattern-separator'  : 'pattern-separator' .
 'DFPropertyName'         -> 'exponent-separator' : 'exponent-separator'.
 
-'Import'                 -> 'SchemaImport' : ?err('XQST0009').
+'Import'                 -> 'SchemaImport' : ?err('XQST0009', {undefined, 1}).
 'Import'                 -> 'ModuleImport' : {'module-import', '$1'}.
 
 %list of URILiteral
@@ -284,7 +285,7 @@ Nonassoc 2200 ':' ' :' ': '.
 
 'ModuleImport'           -> 'import' 'module' 'URILiteral'
                            : if '$3' == <<>> ->
-                                    ?err('XQST0088');
+                                    ?err('XQST0088', {undefined, line('$2')});
                                  true ->
                                     Ns = list_to_binary(["Q{", check_import_uri('$3'), "}"]), 
                                     xqerl_context:add_statically_known_namespace(parser,Ns, <<>>),
@@ -292,7 +293,7 @@ Nonassoc 2200 ':' ' :' ': '.
                               end.
 'ModuleImport'           -> 'import' 'module' 'namespace' 'NCName' '=' 'URILiteral' 
                            : if '$6' == <<>> ->
-                                    ?err('XQST0088');
+                                    ?err('XQST0088', {undefined, line('$5')});
                                  true ->
                                     Ns = list_to_binary(["Q{", check_import_uri('$6'), "}"]), 
                                     xqerl_context:add_statically_known_namespace(parser,Ns, bin_value_of('$4')),
@@ -300,7 +301,7 @@ Nonassoc 2200 ':' ' :' ': '.
                               end.
 'ModuleImport'           -> 'import' 'module' 'URILiteral' 'at' 'URILiteralList' 
                            : if '$3' == <<>> ->
-                                    ?err('XQST0088');
+                                    ?err('XQST0088', {undefined, line('$2')});
                                  true ->
                                     Ns = list_to_binary(["Q{", check_import_uri('$3'), "}"]), 
                                     xqerl_context:add_statically_known_namespace(parser,Ns, <<>>),
@@ -308,7 +309,7 @@ Nonassoc 2200 ':' ' :' ': '.
                               end.
 'ModuleImport'           -> 'import' 'module' 'namespace' 'NCName' '=' 'URILiteral' 'at' 'URILiteralList' 
                            : if '$6' == <<>> ->
-                                    ?err('XQST0088');
+                                    ?err('XQST0088', {undefined, line('$5')});
                                  true ->
                                     Ns = list_to_binary(["Q{", check_import_uri('$6'), "}"]), 
                                     xqerl_context:add_statically_known_namespace(parser,Ns, bin_value_of('$4')),
@@ -340,9 +341,9 @@ end.
                              {'function-namespace', '$5'}.
 
 'AnnotatedDecl'          -> 'declare' 'AnnotationList' 'VarDecl'      : ('$3')#xqVar{annotations = '$2', anno = line('$1')}.
-'AnnotatedDecl'          -> 'declare' 'AnnotationList' 'FunctionDecl' : ('$3')#xqFunction{annotations = '$2'}.
+'AnnotatedDecl'          -> 'declare' 'AnnotationList' 'FunctionDecl' : ('$3')#xqFunctionDef{annotations = '$2', anno = line('$1')}.
 'AnnotatedDecl'          -> 'declare' 'VarDecl'                       : ('$2')#xqVar{anno = line('$1')}.
-'AnnotatedDecl'          -> 'declare' 'FunctionDecl'                  : '$2'.
+'AnnotatedDecl'          -> 'declare' 'FunctionDecl'                  : ('$2')#xqFunctionDef{anno = line('$1')}.
  
 'AnnotationList'         -> 'Annotation' 'AnnotationList' : ['$1' | '$2'].
 'AnnotationList'         -> 'updating'   'AnnotationList' : [#annotation{name = {qname,<<"http://www.w3.org/2012/xquery">>,<<>>,<<"updating">>}, values = []} | '$2'].
@@ -373,14 +374,14 @@ end.
 'ContextItemDecl'        -> 'declare' 'context' 'item' 'as' 'ItemType' 'external'                        : {'context-item', {'$5', 'external', 'undefined'}}.
 'ContextItemDecl'        -> 'declare' 'context' 'item'                 'external'                        : {'context-item', {'item', 'external', 'undefined'}}.
 
-'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunction{id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4', type = '$7', body = '$8'}.
-'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')' 'as' 'SequenceType' 'external'     : #xqFunction{id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4', type = '$7', external = true}.
-'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')'                     'FunctionBody' : #xqFunction{id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4',              body = '$6'}.
-'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')'                     'external'     : #xqFunction{id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4',              external = true}.
-'FunctionDecl'           -> 'function' 'EQName' '('             ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunction{id = next_id(), name = qname(func, '$2'),                                      type = '$6', body = '$7'}.
-'FunctionDecl'           -> 'function' 'EQName' '('             ')' 'as' 'SequenceType' 'external'     : #xqFunction{id = next_id(), name = qname(func, '$2'),                                      type = '$6', external = true}.
-'FunctionDecl'           -> 'function' 'EQName' '('             ')'                     'FunctionBody' : #xqFunction{id = next_id(), name = qname(func, '$2'),                                                   body = '$5'}.
-'FunctionDecl'           -> 'function' 'EQName' '('             ')'                     'external'     : #xqFunction{id = next_id(), name = qname(func, '$2'),                                                   external = true}.
+'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4', type = '$7', body = '$8'}.
+'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')' 'as' 'SequenceType' 'external'     : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4', type = '$7', external = true}.
+'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')'                     'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4',              body = '$6'}.
+'FunctionDecl'           -> 'function' 'EQName' '(' 'ParamList' ')'                     'external'     : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'), arity = length('$4'), params = '$4',              external = true}.
+'FunctionDecl'           -> 'function' 'EQName' '('             ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'),                                      type = '$6', body = '$7'}.
+'FunctionDecl'           -> 'function' 'EQName' '('             ')' 'as' 'SequenceType' 'external'     : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'),                                      type = '$6', external = true}.
+'FunctionDecl'           -> 'function' 'EQName' '('             ')'                     'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'),                                                   body = '$5'}.
+'FunctionDecl'           -> 'function' 'EQName' '('             ')'                     'external'     : #xqFunctionDef{anno = line('$1'), id = next_id(), name = qname(func, '$2'),                                                   external = true}.
 
 'ParamList'              -> 'Param' ',' 'ParamList' : ['$1' | '$3'].
 'ParamList'              -> 'Param' : ['$1'].
@@ -885,7 +886,7 @@ end.
 'uplus'                  -> '+' 'uminus' : {'unary', '+', '$2'}.
 'uplus'                  -> '+' 'uplus'  : {'unary', '+', '$2'}.
 % [98]     ValueExpr      ::=      ValidateExpr | ExtensionExpr | SimpleMapExpr 
-'ValueExpr'              -> 'ValidateExpr'   : ?err('XQST0075'). %TODO Schema Aware Feature
+'ValueExpr'              -> 'ValidateExpr'   : ?err('XQST0075', {undefined, 1}). %TODO Schema Aware Feature
 'ValueExpr'              -> 'ExtensionExpr'  : '$1'.
 'ValueExpr'              -> 'SimpleMapExpr'  : '$1'.
 % [99]     GeneralComp    ::=      "=" | "!=" | "<" | "<=" | ">" | ">="   
@@ -988,7 +989,7 @@ end.
                                                 #xqKindTest{kind = 'attribute'} ->
                                                   {'attribute', '$1'};
                                                 #xqKindTest{kind = 'namespace'} ->
-                                                  ?err('XQST0134'); % no abbrev namespace allowed
+                                                  ?err('XQST0134', {undefined, 0}); % no abbrev namespace allowed
                                                 _ ->
                                                   {'child', '$1'}
                                              end.
@@ -1140,22 +1141,22 @@ end.
 'DirElemConstructor'     -> '<' 'EQName' 'DirAttributeList' '>' 'DirElemContents' '</' 'EQName' '>' 
                               : if '$2' == '$7' ->
                                  #xqElementNode{identity = next_id(), attributes = '$3', name = qname(other,'$2'), content = '$5'};
-                                 true -> ?err('XQST0118')
+                                 true -> ?err('XQST0118', {undefined, line('$1')})
                                 end. 
 'DirElemConstructor'     -> '<' 'EQName' 'DirAttributeList' '>' 'DirElemContents' '</' 'EQName' 'S' '>' 
                               : if '$2' == '$7' ->
                                  #xqElementNode{identity = next_id(), attributes = '$3', name = qname(other,'$2'), content = '$5'};
-                                 true -> ?err('XQST0118')
+                                 true -> ?err('XQST0118', {undefined, line('$1')})
                                 end. 
 'DirElemConstructor'     -> '<' 'EQName' 'DirAttributeList' '>' '</' 'EQName' '>' 
                               : if '$2' == '$6' ->
                                  #xqElementNode{identity = next_id(), attributes = '$3', name = qname(other,'$2')};
-                                 true -> ?err('XQST0118')
+                                 true -> ?err('XQST0118', {undefined, line('$1')})
                                 end.  
 'DirElemConstructor'     -> '<' 'EQName' 'DirAttributeList' '>' '</' 'EQName' 'S' '>' 
                               : if '$2' == '$6' ->
                                  #xqElementNode{identity = next_id(), attributes = '$3', name = qname(other,'$2')};
-                                 true -> ?err('XQST0118')
+                                 true -> ?err('XQST0118', {undefined, line('$1')})
                                 end.  
 'DirElemConstructor'     -> '<' 'EQName' '/>' 
                               : #xqElementNode{identity = next_id(), name = qname(other,'$2')}.
@@ -1166,12 +1167,12 @@ end.
 'DirElemConstructor'     -> '<' 'EQName' '>' '</' 'EQName' '>' 
                               : if '$2' == '$5' ->
                                  #xqElementNode{identity = next_id(), name = qname(other,'$2')};
-                                 true -> ?err('XQST0118')
+                                 true -> ?err('XQST0118', {undefined, line('$1')})
                                 end.  
 'DirElemConstructor'     -> '<' 'EQName' '>' '</' 'EQName' 'S' '>' 
                               : if '$2' == '$5' ->
                                  #xqElementNode{identity = next_id(), name = qname(other,'$2')};
-                                 true -> ?err('XQST0118')
+                                 true -> ?err('XQST0118', {undefined, line('$1')})
                                 end.  
 % [143]    DirAttributeList     ::=      (S (QName S? "=" S? DirAttributeValue)?)* /* ws: explicit */
 'DirAttributeList'       -> 'DirAttribute' 'DirAttributeList' : case '$1' of
@@ -1316,14 +1317,14 @@ end.
 % [168]    NamedFunctionRef     ::=      EQName "#" IntegerLiteral  /* xgc: reserved-function-names */
 'NamedFunctionRef'       -> 'EQName' '#' 'IntegerLiteral' : {'function-ref', qname(func, '$1'), value_of('$3')}.
 % [169]    InlineFunctionExpr      ::=      Annotation* "function" "(" ParamList? ")" ("as" SequenceType)? FunctionBody   
-'InlineFunctionExpr'     -> 'AnnotationList' 'function' '(' 'ParamList' ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunction{id = next_id(), annotations = '$1',name = undefined, arity = length('$4'), params = '$4', type = '$7', body = '$8'}.
-'InlineFunctionExpr'     ->                  'function' '(' 'ParamList' ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunction{id = next_id(), annotations = []  ,name = undefined, arity = length('$3'), params = '$3', type = '$6', body = '$7'}.
-'InlineFunctionExpr'     -> 'AnnotationList' 'function' '('             ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunction{id = next_id(), annotations = '$1',name = undefined,                                      type = '$6', body = '$7'}.
-'InlineFunctionExpr'     ->                  'function' '('             ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunction{id = next_id(), annotations = []  ,name = undefined,                                      type = '$5', body = '$6'}.
-'InlineFunctionExpr'     -> 'AnnotationList' 'function' '(' 'ParamList' ')'                     'FunctionBody' : #xqFunction{id = next_id(), annotations = '$1',name = undefined, arity = length('$4'), params = '$4',              body = '$6'}.
-'InlineFunctionExpr'     ->                  'function' '(' 'ParamList' ')'                     'FunctionBody' : #xqFunction{id = next_id(), annotations = []  ,name = undefined, arity = length('$3'), params = '$3',              body = '$5'}.
-'InlineFunctionExpr'     -> 'AnnotationList' 'function' '('             ')'                     'FunctionBody' : #xqFunction{id = next_id(), annotations = '$1',name = undefined,                                                   body = '$5'}.
-'InlineFunctionExpr'     ->                  'function' '('             ')'                     'FunctionBody' : #xqFunction{id = next_id(), annotations = []  ,name = undefined,                                                   body = '$4'}.
+'InlineFunctionExpr'     -> 'AnnotationList' 'function' '(' 'ParamList' ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunctionDef{anno = line('$2'), id = next_id(), annotations = '$1',name = undefined, arity = length('$4'), params = '$4', type = '$7', body = '$8'}.
+'InlineFunctionExpr'     ->                  'function' '(' 'ParamList' ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), annotations = []  ,name = undefined, arity = length('$3'), params = '$3', type = '$6', body = '$7'}.
+'InlineFunctionExpr'     -> 'AnnotationList' 'function' '('             ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunctionDef{anno = line('$2'), id = next_id(), annotations = '$1',name = undefined,                                      type = '$6', body = '$7'}.
+'InlineFunctionExpr'     ->                  'function' '('             ')' 'as' 'SequenceType' 'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), annotations = []  ,name = undefined,                                      type = '$5', body = '$6'}.
+'InlineFunctionExpr'     -> 'AnnotationList' 'function' '(' 'ParamList' ')'                     'FunctionBody' : #xqFunctionDef{anno = line('$2'), id = next_id(), annotations = '$1',name = undefined, arity = length('$4'), params = '$4',              body = '$6'}.
+'InlineFunctionExpr'     ->                  'function' '(' 'ParamList' ')'                     'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), annotations = []  ,name = undefined, arity = length('$3'), params = '$3',              body = '$5'}.
+'InlineFunctionExpr'     -> 'AnnotationList' 'function' '('             ')'                     'FunctionBody' : #xqFunctionDef{anno = line('$2'), id = next_id(), annotations = '$1',name = undefined,                                                   body = '$5'}.
+'InlineFunctionExpr'     ->                  'function' '('             ')'                     'FunctionBody' : #xqFunctionDef{anno = line('$1'), id = next_id(), annotations = []  ,name = undefined,                                                   body = '$4'}.
 
 % [170]    MapConstructor    ::=      "map" "{" (MapConstructorEntry ("," MapConstructorEntry)*)? "}"
 'MapConstructor'         -> 'map' '{' 'MapConstructorEntries' '}' : {'map', '$3'}.
@@ -1416,7 +1417,7 @@ end.
 'AnyKindTest'            -> 'node' '(' ')' : #xqKindTest{kind = 'node'}.
 % [190]    DocumentTest      ::=      "document-node" "(" (ElementTest | SchemaElementTest)? ")"
 'DocumentTest'           -> 'document-node' '(' 'ElementTest' ')'       : ('$3')#xqKindTest{kind = 'document-node'}.
-'DocumentTest'           -> 'document-node' '(' 'SchemaElementTest' ')' : ?err('XPST0008').
+'DocumentTest'           -> 'document-node' '(' 'SchemaElementTest' ')' : ?err('XPST0008', {undefined, line('$1')}).
 %'DocumentTest'           -> 'document-node' '(' 'SchemaElementTest' ')' : ('$3')#xqKindTest{kind = 'document-node'}.
 'DocumentTest'           -> 'document-node' '(' ')'                     : #xqKindTest{kind = 'document-node'}.
 % [191]    TextTest    ::=      "text" "(" ")" 
@@ -1501,7 +1502,7 @@ end.
    BV = bin_value_of('$1'),
    case xqerl_lib:check_uri_string(BV) of
       {error,_} when BV == <<>> ->
-         ?err('FORG0001');
+         ?err('FORG0001', {undefined, line('$1')});
       {error,_} ->
          BV;
 %         ?err('XQST0046');
@@ -1525,7 +1526,7 @@ end.
 %'LocalPart'              -> 'Prefix' : '$1'.
 
 
-'URIQualifiedName'       -> 'BracedURILiteral' 'NCName' : if '$1' == <<"http://www.w3.org/2000/xmlns/">> -> ?err('XQST0070');
+'URIQualifiedName'       -> 'BracedURILiteral' 'NCName' : if '$1' == <<"http://www.w3.org/2000/xmlns/">> -> ?err('XQST0070', {undefined, 0});
                                                              true -> #'qname'{namespace = '$1', local_name = bin_value_of('$2')}
                                                           end.
 'BracedURILiteral'       -> 'Q' '{' 'URILiteral' '}'    : '$3'.
